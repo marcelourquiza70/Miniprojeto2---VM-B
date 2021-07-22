@@ -22,6 +22,7 @@ class backup:
 
     @staticmethod
     def exportar(nome_arquivo, lista_contatos):
+        '''Exporta a lista de contatos para arquivo .csv'''
         
         arquivo = open(nome_arquivo, "w", encoding="utf-8")
         csv.writer(arquivo, delimiter=';', lineterminator='\n').writerows(lista_contatos)
