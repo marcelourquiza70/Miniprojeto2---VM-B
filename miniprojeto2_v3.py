@@ -55,7 +55,7 @@ class dados:
     
     @staticmethod
     def valida_email(email):
-        #verifica se o email contám um domínio
+        #verifica se o email contém um domínio
         while True:
             if '@' in email and '.' in email and email[-1] != '.':
                 return True
@@ -65,6 +65,10 @@ class dados:
 
     @staticmethod
     def requisita_dados():
+        
+        lista_emails = []
+        
+        lista_telefones = []
 
         while True:
             nome = input('Entre com o nome do contato: ')
@@ -79,16 +83,21 @@ class dados:
                 break
 
         while True:
-            telefone = input('Entre com o telefone do contato: ')
+            telefone = input('Entre com o telefone do contato (q para sair): ')
+            if telefone.lower() == 'q':
+                break 
             if dados.valida_telefone(telefone):
-                break
+                lista_telefones.append(telefone)
+                print(lista_telefones)
 
         while True:
-            email = input('Entre com o e-mail do contato: ')
-            if dados.valida_email(email):
+            email = input('Entre com o e-mail do contato (q para sair): ')
+            if email.lower() == 'q':
                 break
+            if dados.valida_email(email):
+                lista_emails.append(email.lower())
         
-        return nome, telefone, email, sobrenome
+        return nome, lista_telefones, lista_emails, sobrenome
 
 class Agenda:
     
@@ -105,8 +114,8 @@ class Agenda:
             opt = input('1. Cadastrar contato: \n2. Alterar contato: \n3. Exclui contato\n4. Listar contatos\n5. Pesquisar contato\n6. Importar backup de contatos\n0. Sair\n')
             
             if opt == '1':
-                nome, telefone, email, sobrenome = dados.requisita_dados()
-                self.cadastra_contato(nome, telefone, email, sobrenome)
+                nome, lista_telefones, lista_emails, sobrenome = dados.requisita_dados()
+                self.cadastra_contato(nome, lista_telefones, lista_emails, sobrenome)
                 
             elif opt == '2':
                 self.altera_contato()
@@ -129,12 +138,12 @@ class Agenda:
                 print('Opção inválida')
 
 
-    def cadastra_contato(self, nome, telefone, email, sobrenome = ''):
+    def cadastra_contato(self, nome, lista_telefones, lista_emails, sobrenome = ''):
         if self.contatos_ativos < 30:
             id = self.contatos_totais + 1
             self.contatos_totais += 1
             self.contatos_ativos += 1
-            contato = Contato(id, nome, telefone, email.lower(), sobrenome)
+            contato = Contato(id, nome, lista_telefones, lista_emails, sobrenome)
             self.contatos.append(contato)
             #self.conta_ativos()
         else:
@@ -149,8 +158,8 @@ class Agenda:
         contato_selecionado = self.seleciona_contato(opt)
         nome = input(f'Entre com o nome do contato [{contato_selecionado.nome}]: ') or contato_selecionado.nome
         sobrenome = input(f'Entre com o sobrenome do contato [{contato_selecionado.sobrenome}]: ') or contato_selecionado.sobrenome
-        telefone = input(f'Entre com o telefone do contato [{contato_selecionado.telefone}]: ') or contato_selecionado.telefone
-        email = input(f'Entre com o email do contato [{contato_selecionado.email}]: ') or contato_selecionado.email
+        self.altera_telefone(contato_selecionado)
+        self.altera_email(contato_selecionado)
         if contato_selecionado.ativo:
             excluir = input('contato ativo. Excluir (s ou n)?')
             if excluir.lower() == 's':
@@ -161,8 +170,6 @@ class Agenda:
                 contato_selecionado.ativo = True
         contato_selecionado.nome = nome.lower()
         contato_selecionado.sobrenome = sobrenome.lower()
-        contato_selecionado.telefone = telefone
-        contato_selecionado.email = email.lower()
 
 
 #    def testa_nome(self):
@@ -184,8 +191,50 @@ class Agenda:
             else:    
                 return self.contatos[opt-1]
                 break
-                
-                
+
+
+#    def seleciona_telefone(self, contato_selecionado):
+#        for tel in contato_selecionado.lista_telefones:
+#                    print(f'\tTelefone {contato_selecionado.lista_telefones.index(tel)+1}: {tel}')
+#        opt = int(input('Selecione o telefone: '))
+#        while True:
+#            if opt > len(contato_selecionado.lista_telefones) or opt < 1:
+#                opt = int(input('Tente de novo. Selecione o telefone: '))
+#            else:    
+#                return opt
+#                break
+
+
+    def altera_telefone(self, contato_selecionado):
+        for tel in contato_selecionado.lista_telefones:
+            telefone = input(f'Entre com o novo telefone (q para sair) [{tel}]: ') or tel
+            if telefone.lower() == 'q':
+                break
+            contato_selecionado.lista_telefones[contato_selecionado.lista_telefones.index(tel)] = telefone
+
+
+#    def seleciona_email(self, contato_selecionado):
+#        for email in contato_selecionado.lista_emails:
+#                    print(f'\tE-mail {contato_selecionado.lista_emails.index(email)+1}: {email}')
+#        opt = int(input('Selecione o E-mail: '))
+#        if opt.lower() == 'q':
+#                break
+#        while True:
+#            if opt > len(contato_selecionado.lista_emails) or opt < 1:
+#                opt = int(input('Tente de novo. Selecione o E-mail: '))
+#            else:    
+#                return opt
+#                break
+
+
+    def altera_email(self, contato_selecionado):
+        for email in contato_selecionado.lista_emails:
+            novo_email = input(f'Entre com o novo E-mail [{email}]: ') or email
+            if email.lower() == 'q':
+                break
+            contato_selecionado.lista_emails[contato_selecionado.lista_emails.index(email)] = novo_email
+
+
     def busca_contato(self):
         opt = input('Qual contato vc está buscando: ')
         counter = 0
@@ -194,8 +243,10 @@ class Agenda:
             if opt in contato.nome or opt in busca_exata or opt in contato.sobrenome or opt in contato.telefone or opt in contato.email:
                 print(f'{contato.ID}.\tNome: {contato.nome.title()}')
                 print(f'\tSobrenome: {contato.sobrenome.title()}')
-                print(f'\tTelefone: {contato.telefone}')
-                print(f'\tE-mail: {contato.email.title()}')
+                for tel in contato.lista_telefones:
+                    print(f'\tTelefone {contato.lista_telefones.index(tel)+1}: {tel}')
+                for email in contato.lista_emails:
+                    print(f'\tE-mail {contato.lista_emails.index(email)+1}: {email}')
             else:
                 counter += 1
         if counter == len(self.contatos):
@@ -227,12 +278,12 @@ class Agenda:
 
 
 class Contato():
-    def __init__(self, id, nome, telefone, email, sobrenome=''):
+    def __init__(self, id, nome, lista_telefones, lista_emails, sobrenome=''):
         self.ID = id
         self.nome = nome
         self.sobrenome = sobrenome
-        self.telefone = [telefone]
-        self.email = [email]
+        self.lista_telefones = lista_telefones
+        self.lista_emails = lista_emails
         self.ativo = True
 
 
