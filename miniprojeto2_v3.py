@@ -108,10 +108,11 @@ class Agenda:
         self.contatos_ativos = 0
         self.contatos_totais = 0
         self.contatos = []
+        self.grupos = []
 
     def menu_agenda(self):
         while True:
-            opt = input('1. Cadastrar contato: \n2. Alterar contato: \n3. Exclui contato\n4. Listar contatos\n5. Pesquisar contato\n6. Importar backup de contatos\n0. Sair\n')
+            opt = input('1. Cadastrar contato: \n2. Alterar contato: \n3. Exclui contato\n4. Listar contatos\n5. Pesquisar contato\n6. Criar grupo\n7. Incluir/Exluir contato em grupo\n8. Listar Contatos de grupo\n9. Importar backup de contatos\n0. Sair\n')
             
             if opt == '1':
                 nome, lista_telefones, lista_emails, sobrenome = dados.requisita_dados()
@@ -127,6 +128,12 @@ class Agenda:
             elif opt == '5':
                 self.busca_contato()
             elif opt == '6':
+                self.cria_grupo()
+            elif opt == '7':
+                self.inclui_contato_no_grupo()
+            elif opt == '8':
+                self.listar_contatos_de_grupo()
+            elif opt == '9':
                 lista_contatos = backup.importar('contatos.csv')
                 for contato in lista_contatos:
                     self.cadastra_contato(contato[0],contato[1],contato[2])
@@ -172,8 +179,47 @@ class Agenda:
         contato_selecionado.sobrenome = sobrenome.lower()
 
 
-#    def testa_nome(self):
-#        if self.nome isalpha:
+    def cria_grupo(self):
+        nome_grupo = input('Entre com o nome do grupo de pesquisa a ser criado: ')
+        self.grupos.append(nome_grupo)
+        print('Grupo {nome_grupo} criado com sucesso!')
+
+
+    def inlui_exclui_contato_em_grupo(self):
+        opt = input('Inluir ou exlcuir Contato de grupo (I ou E): ')
+        if opt.lower() == 'i':
+            lista_grupos(self)
+            tag = input('Selecione grupo a incluir: ')
+            inclui_contato_no_grupo(self, self.tags[tag]) 
+
+
+    def inclui_contato_no_grupo(self, tag):
+        self.tags.append(self.tags[tag])
+        print('contato {self.nome} incluído no grupo {self.tags[tag]}!')
+
+
+    def exclui_contato_do_grupo(self, tag):
+        self.tags.remove(tag)
+        print('contato {self.nome} excluído do grupo {tag}!')        
+
+
+    def lista_grupos(self):
+        print('Código do grupo\tNome do Grupo')
+        for indice, grupo in enumerate(self.grupos):
+            print(f'{indice + 1}.\t{grupo}')
+
+
+    def listar_contato_de_grupo():
+        lista_grupos(self)
+        opt = input('Escolha o grupo a listar: ')
+        print(f'--------------------AGENDA: {self.nome_agenda}--------------------')
+        print('------------------------CONTATOS------------------------')
+        print(f'------------------------{self.grupo[opt - 1]}--------------------------')
+        print('ID'.ljust(3),' ','Nome')
+        for contato in self.contatos:
+            if contato.tags == self.grupo[opt - 1]:
+                print(f'{contato.ID:3d}','-',contato.nome,contato.sobrenome)
+        print('-------------------------------------------------------')
 
 
     def exclui_contato(self):
@@ -207,7 +253,7 @@ class Agenda:
 
     def altera_telefone(self, contato_selecionado):
         for tel in contato_selecionado.lista_telefones:
-            telefone = input(f'Entre com o novo telefone (q para sair) [{tel}]: ') or tel
+            telefone = input(f'Entre com o novo telefone (q para sair) [({tel[-11:-9]}) {tel[-9:-8]} {tel[-8:-4]}-{tel[-4:]}]: ') or tel
             if telefone.lower() == 'q':
                 break
             contato_selecionado.lista_telefones[contato_selecionado.lista_telefones.index(tel)] = telefone
@@ -244,7 +290,7 @@ class Agenda:
                 print(f'{contato.ID}.\tNome: {contato.nome.title()}')
                 print(f'\tSobrenome: {contato.sobrenome.title()}')
                 for tel in contato.lista_telefones:
-                    print(f'\tTelefone {contato.lista_telefones.index(tel)+1}: {tel}')
+                    print(f'\tTelefone {contato.lista_telefones.index(tel)+1}: ({tel[-11:-9]}) {tel[-9:-8]} {tel[-8:-4]}-{tel[-4:]}')
                 for email in contato.lista_emails:
                     print(f'\tE-mail {contato.lista_emails.index(email)+1}: {email}')
             else:
@@ -264,9 +310,11 @@ class Agenda:
                 print(f'{contato.ID:3d}','-',contato.nome,contato.sobrenome)
                 #print(f'{contato.ID:<}\t{contato.nome.title():<}\t{contato.sobrenome.title():<}\t({contato.telefone[0][-11:-9]:<}) {contato.telefone[0][-9:-8]:<} {contato.telefone[0][-8:-4]:<}-{contato.telefone[0][-4:]:<}\t{contato.email[0]:<}')
             elif opt == '2' and contato.ativo == False:
-                print(f'{contato.ID}\t{contato.nome.title()}\t{contato.sobrenome.title()}\t({contato.telefone[-11:-9]}) {contato.telefone[-9:-8]} {contato.telefone[-8:-4]}-{contato.telefone[-4:]}\t{contato.email[0]}')
+                print(f'{contato.ID:3d}','-',contato.nome,contato.sobrenome)
+                #print(f'{contato.ID}\t{contato.nome.title()}\t{contato.sobrenome.title()}\t({contato.telefone[-11:-9]}) {contato.telefone[-9:-8]} {contato.telefone[-8:-4]}-{contato.telefone[-4:]}\t{contato.email[0]}')
             elif opt == '3':
-                print(f'{contato.ID}\t{contato.nome.title()}\t{contato.sobrenome.title()}\t({contato.telefone[-11:-9]}) {contato.telefone[-9:-8]} {contato.telefone[-8:-4]}-{contato.telefone[-4:]}\t{contato.email[0]}')
+                print(f'{contato.ID:3d}','-',contato.nome,contato.sobrenome)
+                #print(f'{contato.ID}\t{contato.nome.title()}\t{contato.sobrenome.title()}\t({contato.telefone[-11:-9]}) {contato.telefone[-9:-8]} {contato.telefone[-8:-4]}-{contato.telefone[-4:]}\t{contato.email[0]}')
         print('-------------------------------------------------------')
 
 
@@ -285,6 +333,7 @@ class Contato():
         self.lista_telefones = lista_telefones
         self.lista_emails = lista_emails
         self.ativo = True
+        self.tags = []
 
 
 def main():
