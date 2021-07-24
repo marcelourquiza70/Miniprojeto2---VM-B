@@ -130,7 +130,7 @@ class Agenda:
             elif opt == '6':
                 self.cria_grupo()
             elif opt == '7':
-                self.inclui_contato_no_grupo()
+                self.inlui_exclui_contato_em_grupo()
             elif opt == '8':
                 self.listar_contatos_de_grupo()
             elif opt == '9':
@@ -182,25 +182,30 @@ class Agenda:
     def cria_grupo(self):
         nome_grupo = input('Entre com o nome do grupo de pesquisa a ser criado: ')
         self.grupos.append(nome_grupo)
-        print('Grupo {nome_grupo} criado com sucesso!')
+        print(f'Grupo {nome_grupo} criado com sucesso!')
 
 
     def inlui_exclui_contato_em_grupo(self):
+        contato_selecionado = self.seleciona_contato('1')
         opt = input('Inluir ou exlcuir Contato de grupo (I ou E): ')
         if opt.lower() == 'i':
-            lista_grupos(self)
+            self.lista_grupos()
             tag = input('Selecione grupo a incluir: ')
-            inclui_contato_no_grupo(self, self.tags[tag]) 
+            self.inclui_contato_no_grupo(contato_selecionado, tag)
+        if opt.lower() == 'e':
+            self.lista_grupos()
+            tag = input('Selecione grupo a excluir: ')
+            self.exclui_contato_do_grupo(contato_selecionado, tag) 
 
 
-    def inclui_contato_no_grupo(self, tag):
-        self.tags.append(self.tags[tag])
-        print('contato {self.nome} incluído no grupo {self.tags[tag]}!')
+    def inclui_contato_no_grupo(self, contato_selecionado, tag):
+        contato_selecionado.tags.append(self.grupos[int(tag) - 1])
+        print(contato_selecionado.tags)
+        print('contato {contato_selecionado} incluído no grupo {self.tags[int(tag) - 1]}!')
 
-
-    def exclui_contato_do_grupo(self, tag):
-        self.tags.remove(tag)
-        print('contato {self.nome} excluído do grupo {tag}!')        
+    def exclui_contato_do_grupo(self, contato_selecionado, tag):
+        contato_selecionado.tags.remove(contato_selecionado.tags[int(tag) - 1])
+        print('contato {contato_selecionado} excluído do grupo {self.tags[int(tag) - 1]}!')        
 
 
     def lista_grupos(self):
@@ -209,16 +214,17 @@ class Agenda:
             print(f'{indice + 1}.\t{grupo}')
 
 
-    def listar_contato_de_grupo():
-        lista_grupos(self)
+    def listar_contatos_de_grupo(self):
+        self.lista_grupos()
         opt = input('Escolha o grupo a listar: ')
         print(f'--------------------AGENDA: {self.nome_agenda}--------------------')
         print('------------------------CONTATOS------------------------')
-        print(f'------------------------{self.grupo[opt - 1]}--------------------------')
+        print(f'------------------------{self.grupos[int(opt) - 1]}--------------------------')
         print('ID'.ljust(3),' ','Nome')
         for contato in self.contatos:
-            if contato.tags == self.grupo[opt - 1]:
-                print(f'{contato.ID:3d}','-',contato.nome,contato.sobrenome)
+            for tag in contato.tags:
+                if tag == self.grupos[int(opt) - 1]:
+                    print(f'{contato.ID:3d}','-',contato.nome,contato.sobrenome)
         print('-------------------------------------------------------')
 
 
