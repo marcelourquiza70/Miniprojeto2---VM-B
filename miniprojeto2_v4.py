@@ -1,4 +1,9 @@
 import csv
+import os
+from os import listdir
+from os.path import isfile, join
+
+
     
 class backup:
     @staticmethod
@@ -7,33 +12,123 @@ class backup:
         Lê um arquivo .csv e retorna seu conteúdo em uma lista de listas
         '''
         try:
-            arquivo = open(nome_arquivo, "r", encoding="utf-8")
+            arquivo = open('arquivos/' + nome_arquivo, "r", encoding="utf-8")
             lista_csv = csv.reader(arquivo, delimiter=";", lineterminator="\n")
             lista_contatos = []
         
             for contato in lista_csv:
                 lista_contatos.append(contato)
-            
             arquivo.close()
-            
+            lista_contatos = backup.formata_lista_contatos_importacao(lista_contatos)
+
             return lista_contatos
 
         except:
-            print('\nArquivo de backup (contatos.csv) não encontrado.\n')
+            print(f'\nArquivo de backup {nome_arquivo} não encontrado.\n')
+            return False
+
 
     @staticmethod
     def exportar(nome_arquivo, lista_contatos):
         '''
         Exporta a lista de contatos para arquivo .csv
         '''
-        
-        arquivo = open(nome_arquivo, "w", encoding="utf-8")
+
+        arquivo = open('arquivos/' + nome_arquivo, "w", encoding="utf-8")
         csv.writer(arquivo, delimiter=';', lineterminator='\n').writerows(lista_contatos)
         arquivo.close()
-        
-        print(f"A lista de contatos foi exportada para o arquivo: {arquivo} .")
-        
+        print(f"A lista de contatos foi exportada para o arquivo: {nome_arquivo} .")
+
         return
+
+
+    @staticmethod
+    def formata_lista_contatos_importacao(lista_contatos):
+        '''
+        formata a lista de contatos para importação para arquivo csv
+        '''
+        
+        for contato in lista_contatos:
+            tel_counter = 0
+            email_counter = 0
+            indice_inicio_tel = 0
+            indice_inicio_email = 0
+            
+            for campo in contato:
+                if campo.isnumeric():
+                    tel_counter += 1
+                if campo.isnumeric() == False and tel_counter == 0:
+                    indice_inicio_tel += 1
+                if '@' in campo:
+                    email_counter += 1
+                if '@' not in campo and email_counter == 0:
+                    indice_inicio_email += 1
+                if campo == '':
+                    contato.remove(campo)
+            lista_aux = []
+            lista_aux2 = []
+            for i in range(indice_inicio_tel, indice_inicio_tel + tel_counter):
+                lista_aux.append(contato.pop(indice_inicio_tel))
+            for i in range(indice_inicio_tel, indice_inicio_tel + email_counter):
+                lista_aux2.append(contato.pop(indice_inicio_tel))
+            contato.insert(1, lista_aux)
+            contato.insert(2, lista_aux2)
+
+        return lista_contatos
+
+
+    @staticmethod
+    def formata_lista_contatos_exportacao(contatos):
+        '''
+        formata a lista de contatos para exportação para arquivo csv
+        '''
+
+        lista_contatos = []
+
+        for contato in contatos:
+            contato_aux = []
+            contato_aux.append(contato.nome)
+
+            for i in range(len(contato.lista_telefones)):
+                tel_aux = contato.lista_telefones[i]
+                contato_aux.append(tel_aux)
+
+            for i in range(len(contato.lista_emails)):
+                email_aux = contato.lista_emails[i]
+                contato_aux.append(email_aux)
+
+            if contato.sobrenome != '':
+                contato_aux.append(contato.sobrenome)
+
+            lista_contatos.append(contato_aux)
+
+        return lista_contatos
+
+
+
+    @staticmethod
+    def criar(nome_arquivo):
+        '''
+        Cria uma lista de contatos em um arquivo .csv
+        '''
+        arquivo = open('arquivos/' + nome_arquivo + '.csv', "w", encoding="utf-8")
+        arquivo.close()
+        
+        print(f"Arquivo {nome_arquivo}.csv criado!")
+        
+        return    
+
+
+    @staticmethod
+    def le_diretorio():
+        '''
+        Le o diretorio de arquivos .csv
+        '''
+        mypath = 'arquivos/'
+        onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+
+        return onlyfiles
+
 
 class dados:
     @staticmethod
@@ -100,7 +195,6 @@ class dados:
                 break 
             if dados.valida_telefone(telefone):
                 lista_telefones.append(telefone)
-                print(lista_telefones)
 
         while True:
             email = input('Entre com o e-mail do contato (q para sair): ')
@@ -110,6 +204,7 @@ class dados:
                 lista_emails.append(email.lower())
         
         return nome, lista_telefones, lista_emails, sobrenome
+
 
 class Agenda:
     
@@ -130,7 +225,7 @@ class Agenda:
         Menu da agenda
         '''
         while True:
-            opt = input('1. Cadastrar contato: \n2. Alterar contato: \n3. Exclui contato\n4. Listar contatos\n5. Pesquisar contato\n6. Criar grupo\n7. Incluir/Exluir contato em grupo\n8. Listar Contatos de grupo\n9. Importar backup de contatos\n0. Sair\n')
+            opt = input('1. Cadastrar contato: \n2. Alterar contato: \n3. Exclui contato\n4. Listar contatos\n5. Pesquisar contato\n6. Criar grupo\n7. Incluir/Exluir contato em grupo\n8. Listar Contatos de grupo\n9. Importar backup de contatos\n10. Salvar alterações\n0. Sair\n')
             
             if opt == '1':
                 nome, lista_telefones, lista_emails, sobrenome = dados.requisita_dados()
@@ -142,7 +237,7 @@ class Agenda:
                 contato_selecionado = self.seleciona_contato('1')
                 self.inativar_contato(contato_selecionado)
             elif opt == '4':
-                opt = '1' #input('1.Ativos\n2.Inativos\n3.Todos\n')
+                opt = ('1',) #input('1.Ativos\n2.Inativos\n3.Todos\n')
                 self.lista_contatos(opt)
             elif opt == '5':
                 self.pesquisa_contato()
@@ -153,15 +248,29 @@ class Agenda:
             elif opt == '8':
                 self.lista_contatos()
             elif opt == '9':
-                lista_contatos = backup.importar('contatos.csv')
-                for contato in lista_contatos:
-                    self.cadastra_contato(nome = contato[0].lower(), lista_telefones = list([contato[1]]), lista_emails = list([contato[2]]))
-                print(f'{len(lista_contatos)} contatos importados com sucesso.')
+                opt = self.seleciona_csv()
+                lista_contatos = backup.importar(opt)
+                self.cadastra_contatos(lista_contatos)                   
+            elif opt == '10':
+                lista_contatos = backup.formata_lista_contatos_exportacao(self.contatos)
+                backup.exportar(self.nome_agenda, lista_contatos)
+                print(f'Agenda {self.nome_agenda} salva com sucesso!')
             elif opt == '0':
                 print('Voltando para menu de agendas!')
                 break
             else:    
                 print('Opção inválida')
+
+    def cadastra_contatos(self, lista_contatos):
+        '''
+        cadastra todos os contatos de uma lista de contatos importados        
+        '''
+        for contato in lista_contatos:
+            if len(contato) == 3:
+                self.cadastra_contato(nome = contato[0].lower(), lista_telefones = contato[1], lista_emails = contato[2])
+            if len(contato) == 4:    
+                self.cadastra_contato(nome = contato[0].lower(), lista_telefones = contato[1], lista_emails = contato[2], sobrenome = contato[3])
+        print(f'{len(lista_contatos)} contatos importados com sucesso.')
 
 
     def cadastra_contato(self, nome, lista_telefones, lista_emails, sobrenome = ''):
@@ -192,9 +301,26 @@ class Agenda:
         contato_selecionado = self.seleciona_contato(opt)
         nome = input(f'Entre com o nome do contato [{contato_selecionado.nome}]: ') or contato_selecionado.nome
         sobrenome = input(f'Entre com o sobrenome do contato [{contato_selecionado.sobrenome}]: ') or contato_selecionado.sobrenome
+        
         self.altera_telefone(contato_selecionado)
+        
+        while True:
+            telefone = input('Entre com o telefone do contato (q para sair): ')
+            if telefone.lower() == 'q':
+                break 
+            if dados.valida_telefone(telefone):
+                contato_selecionado.lista_telefones.append(telefone)
+        
         self.altera_email(contato_selecionado)
-        if 'Ativo' in contato_selecionado.tags:
+        
+        while True:
+            email = input('Entre com o e-mail do contato (q para sair): ')
+            if email.lower() == 'q':
+                break
+            if dados.valida_email(email):
+                contato_selecionado.lista_emails.append(email.lower())
+
+        if 'Ativos' in contato_selecionado.tags:
             excluir = input('contato ativo. Excluir (s ou n)?')
             if excluir.lower() == 's':
                 self.inativar_contato(self, contato_selecionado)
@@ -264,10 +390,10 @@ class Agenda:
             if opt in contato.nome or opt in busca_exata or opt in contato.sobrenome or opt in contato.lista_telefones or opt in contato.lista_emails:
                 print(f'{contato.ID}.\tNome: {contato.nome.title()}')
                 print(f'\tSobrenome: {contato.sobrenome.title()}')
-                for tel in contato.lista_telefones:
-                    print(f'\tTelefone {contato.lista_telefones.index(tel)+1}: ({tel[-11:-9]}) {tel[-9:-8]} {tel[-8:-4]}-{tel[-4:]}')
-                for email in contato.lista_emails:
-                    print(f'\tE-mail {contato.lista_emails.index(email)+1}: {email}')
+                for index, tel in enumerate(contato.lista_telefones):
+                    print(f'\tTelefone {index + 1}: ({tel[-11:-9]}) {tel[-9:-8]} {tel[-8:-4]}-{tel[-4:]}')
+                for index, email in enumerate(contato.lista_emails):
+                    print(f'\tE-mail {index + 1}: {email}')
             else:
                 counter += 1
         if counter == len(self.contatos):
@@ -332,12 +458,12 @@ class Agenda:
     def imprime_contatos(self, opt):
         print(f'--------------------AGENDA: {self.nome_agenda}--------------------')
         print('------------------------CONTATOS------------------------')
-        print(f'------------------------{self.grupos[int(opt) - 1]}--------------------------')
+        print(f'------------------------{self.grupos[int(opt[0]) - 1]}--------------------------')
         print('ID'.ljust(3),' ','Nome')
         for contato in self.contatos:
             for tag in contato.tags:
-                if tag == self.grupos[int(opt) - 1]:
-                    print(f'{contato.ID:3d}','-',contato.nome,contato.sobrenome)
+                if tag == self.grupos[int(opt[0]) - 1]:
+                    print(f'{contato.ID:3d}','-',contato.nome.title(),contato.sobrenome.title())
         print('-------------------------------------------------------')
 
     def lista_grupos(self):
@@ -363,6 +489,18 @@ class Agenda:
                 break
 
 
+    def seleciona_csv(self):
+        '''
+        seleciona um arquivo .csv do diretório
+        '''
+        onlyfiles = backup.le_diretorio()
+        print(f'--------------Arquivos .csv---------------')
+        for file in onlyfiles:
+            print(f'{onlyfiles.index(file) + 1}. {file}')
+        opt = int(input('Selecione o arquivo: '))
+        return (onlyfiles[opt - 1])
+
+    
 class Contato():
     def __init__(self, id, nome, lista_telefones, lista_emails, sobrenome=''):
         '''
@@ -373,7 +511,7 @@ class Contato():
         self.sobrenome = sobrenome
         self.lista_telefones = lista_telefones
         self.lista_emails = lista_emails
-        self.ativo = True
+        #self.ativo = True
         self.tags = []
 
 
@@ -382,8 +520,11 @@ def main():
     Função principal, que inicializa o sistema.
     Pede ao usuário uma opção do Menu e chama as funções conforme a opção escolhida
     '''
+    verifica_diretorios()
+    carrega_agendas()
+
     while True:
-        opt = input('1. Cadastrar agenda: \n2. Acessar agenda: \n3. Listar agendas\n4. Pesquisar agendas\n5. Exclui agenda\n0. Sair\n')
+        opt = input('\n1. Cadastrar agenda: \n2. Acessar agenda: \n3. Listar agendas\n4. Pesquisar agendas\n5. Exclui agenda\n0. Sair\n')
         if opt == '1':
             cria_agenda()
         elif opt == '2':
@@ -400,15 +541,66 @@ def main():
         else:    
             print('Opção inválida')
 
+
+def verifica_diretorios():
+    '''
+    verifica se o diretorio arquivos existe
+    Se não existir, cria um
+    '''
+    caminho = 'arquivos/'
+    if os.path.isdir(caminho):
+        print('Diretório arquivos já existe')
+    else:
+        os.makedirs(caminho)
+        print('diretório arquivos criado')
+
+
 def cria_agenda():
     '''
     Pedo ao usuário um valor para o atributo nome e cria um objeto Agenda com este atributo
     '''
-    nome_agenda = input('Entre com o nome da agenda (0 para sair): ')
-    if nome_agenda != '0':
+    while True:
+        nome_agenda = input('Entre com o nome da agenda (0 para sair): ')
+        if nome_agenda != '0':
+            cria_csv(nome_agenda)
+            cria_objeto_agenda(nome_agenda)
+        else:
+            break
+
+def cria_csv(nome_agenda):
+    '''
+    cria arquvo csv para armazenar uma agenda
+    '''
+    onlyfiles = backup.le_diretorio()
+    if nome_agenda + '.csv' not in onlyfiles: 
+        backup.criar(nome_agenda)
+    else:
+        print(f'Agenda {nome_agenda} já existe')
+    
+
+def cria_objeto_agenda(nome_agenda):
+    '''
+    cria o objeto agenda que vai acessar um arquivo csv com uma agenda armazenada
+    '''
+    if nome_agenda not in Agenda.agendas:
         agenda = Agenda(nome_agenda)
         Agenda.agendas.append(agenda)
-        print(f'Agenda {nome_agenda} criada')
+        print(f'Objeto Agenda.{nome_agenda[0:nome_agenda.find(".")]} criado!')
+        return agenda
+    else:
+        print('Agenda já existe')
+
+
+def carrega_agendas():
+    '''
+    Carrega as agendas existentes no sistema
+    '''
+    onlyfiles = backup.le_diretorio()
+    for f in onlyfiles:
+        agenda = cria_objeto_agenda(f)
+        lista_contatos = backup.importar(f)
+        if lista_contatos:
+            agenda.cadastra_contatos(lista_contatos)
 
 
 def acessa_agenda():
@@ -417,7 +609,9 @@ def acessa_agenda():
     '''
     opt = seleciona_agenda()
     while True:
-        if opt > len(Agenda.agendas) or opt < 1:
+        if opt == -100:
+            break
+        elif opt > len(Agenda.agendas) or opt < 1:
             opt = int(input('Tente de novo. Selecione a agenda: '))
         else:    
             Agenda.agendas[opt-1].menu_agenda()
@@ -430,6 +624,7 @@ def seleciona_agenda():
     '''
     if len(Agenda.agendas) == 0:
         print('Não existem agendas cadastradas.')
+        return -100
     else:
         print('---------AGENDAS---------')
         for agenda in Agenda.agendas:
@@ -446,10 +641,10 @@ def lista_agendas():
     if len(Agenda.agendas) == 0:
         print('Não existem agendas cadastradas.')
     else:
-        print('----------AGENDAS----------')
+        print('--------------------AGENDAS--------------------')
         for agenda in Agenda.agendas:
             print(f'{Agenda.agendas.index(agenda)+1}: {agenda.nome_agenda.title()} - contatos ativos: {agenda.contatos_ativos}, contatos totais: {agenda.contatos_totais}')
-            print('---------------------------\n')
+        print('-----------------------------------------------\n')
 
 
 def busca_agendas():
@@ -473,8 +668,11 @@ def exclui_agenda():
     '''
     opt = seleciona_agenda()
     while True:
+        if opt == -100:
+            break
         excluir = input(f'Tem certeza que deseja excluir a agenda {Agenda.agendas[opt - 1].nome_agenda} (s ou n)?')
         if excluir.lower() == "s":
+            os.remove('arquivos/' + Agenda.agendas[opt - 1].nome_agenda + '.csv')
             Agenda.agendas.remove(Agenda.agendas[opt - 1])
             break
         else:
